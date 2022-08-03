@@ -1,0 +1,198 @@
+#!/usr/bin/env python
+"""
+
+* Install gst-python
+* Compile bindings
+
+See Also:
+https://github.com/NVIDIA-AI-IOT/deepstream_python_apps/tree/v1.1.3/bindings#14-installing-gst-python
+https://github.com/NVIDIA-AI-IOT/deepstream_python_apps/tree/v1.1.3/bindings#223-example
+
+"""
+
+from datetime import datetime
+from hashlib import md5
+import os
+from pathlib import Path
+from shlex import split
+import subprocess as sp
+
+
+DEEPSTREAM = Path("/opt/nvidia/deepstream/deepstream/")
+PROJECT_ROOT = Path(__file__).parents[1]
+BINDINGS = PROJECT_ROOT / "bindings"
+BUILD = BINDINGS / "build"
+APT_REQS = PROJECT_ROOT / "reqs/requirements.apt.list"
+LIBNVINFER_PLUGIN = Path("/usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.4.0")
+PYDS_LABS = PROJECT_ROOT / "3rdparty/pyds_labs"
+DEEPSTREAM_MODELS = DEEPSTREAM / "samples/models"
+PEOPLESEGNET = DEEPSTREAM_MODELS / "peoplesegnet/model.step-600000_trt825_b2n10.etlt"
+
+INSTALL_GST_PYTHON = f"""\
+  cd {PROJECT_ROOT} \
+  && git submodule update --init \
+  && cd 3rdparty/gst-python/ \
+  && ./autogen.sh \
+  && make \
+  && make install
+"""
+
+COMPILE_BINDINGS = f"""\
+cd {BINDINGS} \
+ && mkdir build \
+ && cd build \
+ && cmake \
+   .. \
+   -DPYTHON_MAJOR_VERSION=3 \
+   -DPYTHON_MINOR_VERSION=8 \
+   -DPIP_PLATFORM=linux_aarch64 \
+   -DDS_PATH=/opt/nvidia/deepstream/deepstream/ \
+ && make
+ """
+
+INSTALL_GST_PREREQS = f"""\
+apt-get update \
+  && apt-get install -y \
+  $(cat {APT_REQS} | tr '\n' ' ') \
+  && update-ca-certificates
+"""
+
+
+INSTALL_PRECOMPILED_TRT_OSS = f"""\
+wget https://nvidia.box.com/shared/static/gcp6ylk1ku0zfobhj0sv8vpraz6yzaf9 \
+  -O {LIBNVINFER_PLUGIN} \
+&& ldconfig
+"""
+
+SETUP_PEOPLESEGNET = f"""\
+cd {PROJECT_ROOT} \
+&& wget \
+  --content-disposition \
+  https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0.2/zip \
+  -O peoplesegnet_deployable_v2.0.2.zip \
+  && unzip peoplesegnet_deployable_v2.0.2.zip \
+  && mkdir -p models/peoplesegnet \
+  && mv model.step* models/peoplesegnet \
+  && rm -rf model.step* peoplesegnet_deployable_v2.0.2.zip \
+  && mv models/peoplesegnet {DEEPSTREAM_MODELS}/peoplesegnet
+"""
+
+def _run(*a, **kw):
+    env = dict(os.environ)
+    env['DEBIAN_FRONTEND']="noninteractive"
+    kw.setdefault("check", True)
+    kw.setdefault("env", env)
+    kw.setdefault("shell", True)
+    sp.run(*a, **kw)
+
+def _gst_installed():
+    try:
+        from gi.repository import Gst
+        
+        # TODO: return TRUE iff we can use "pybind11/pybind11.h"
+        # return True
+        return False
+    except ImportError:
+        return False
+
+def _pyds_installed():
+    try:
+        import pyds
+        pyds.NvOSD_MaskParams
+        return True
+    except (ImportError, AttributeError):
+        return False
+
+def _pyds_labs_installed():
+    try:
+        import pyds_labs
+        pyds_labs.Gst
+        return True
+    except (ImportError, AttributeError):
+        return False
+
+def _whl_exist():
+    return (BUILD / "pyds-1.1.3-py3-none-linux_aarch64.whl").exists()
+
+def _trt_oss_installed():
+    should = 'bbce424183ab082bf12ca06ba251c590'
+    got = md5(Path("/usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.4.0").read_bytes()).hexdigest()
+    return got == should
+
+def _peoplesegnet_installed():
+    should = '72b7a71b33dad26e88a8cb5ce8e3ab47'
+    got = md5(Path("/usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so.8.4.0").read_bytes()).hexdigest()
+    return got == should
+
+
+def gst_prereqs(force:bool=False):
+    _run(INSTALL_GST_PREREQS)
+
+def gst_python(force:bool=False):
+    if not force and _gst_installed():
+        return
+    _run(INSTALL_GST_PYTHON)
+
+def _compile_wheels(force:bool=False):
+    if not force and _whl_exist():
+        return
+    _run(COMPILE_BINDINGS)
+
+def pyds(force: bool = False):
+    if not force and _pyds_installed():
+        return
+    _compile_wheels(force=force)
+    wheel = BUILD / "pyds-1.1.3-py3-none-linux_aarch64.whl"
+    pip_install_whl = f"pip install {wheel}"
+    _run(pip_install_whl)
+
+def pyds_labs(force: bool = False):
+    if not force and _pyds_labs_installed():
+        return
+    pip_install_whl = f"pip install {PYDS_LABS}"
+    _run(pip_install_whl)
+
+def trt_oss(force: bool = False):
+    if not force and _trt_oss_installed():
+        return
+    if LIBNVINFER_PLUGIN.exists():
+        dst = Path.home().with_name(f"{LIBNVINFER_PLUGIN.name}.{datetime.now().isoformat()}.bkp")
+        LIBNVINFER_PLUGIN.rename(dst)
+        print(f"old libnvinfer_plugin backed up to {dst}")
+    _run(INSTALL_PRECOMPILED_TRT_OSS)
+
+def peoplesegnet(force: bool = False):
+    if not force and _peoplesegnet_installed():
+        return
+    _run(SETUP_PEOPLESEGNET)
+
+def run_all(force:bool=False):
+    for name, cmd in CMDS.items():
+        if (cmd is run_all) or (name == "pyds_whl"):
+            continue
+        cmd(force=force)
+
+CMDS = {
+    "prereqs": gst_prereqs,
+    "gst_python": gst_python,
+    "trt": trt_oss,
+    "pyds_whl": _compile_wheels,
+    "pyds": pyds,
+    "pyds_labs": pyds_labs,
+    "peoplesegnet": peoplesegnet,
+    "all": run_all,
+}
+
+def get_cli_args():
+    import argparse
+    parser = argparse.ArgumentParser(description='Setup depstream python apps.')
+    parser.add_argument('cmd', nargs='?', choices=CMDS.keys(), default="all")
+    parser.add_argument('--force', action="store_true")
+    return parser.parse_args()
+
+def main() -> int:
+    parsed = get_cli_args()
+    return CMDS[parsed.cmd](force=parsed.force)
+
+if __name__ == "__main__":
+    exit(main())
