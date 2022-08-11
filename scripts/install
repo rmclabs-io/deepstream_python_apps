@@ -134,7 +134,7 @@ def _trt_oss_installed():
 
 def _peoplesegnet_installed():
     should = '72b7a71b33dad26e88a8cb5ce8e3ab47'
-    got = md5((DEEPSTREAM_MODELS}/peoplesegnet/).read_bytes()).hexdigest()
+    got = md5((DEEPSTREAM_MODELS/"peoplesegnet/model.step-600000_trt825_b2n10.etlt").read_bytes()).hexdigest()
     return got == should
 
 
