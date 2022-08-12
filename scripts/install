@@ -125,7 +125,7 @@ def _pyds_labs_installed():
         return False
 
 def _whl_exist():
-    return (BUILD / f"pyds-1.1.3-py3-none-linux_{ARCH_.whl").exists()
+    return (BUILD / f"pyds-1.1.3-py3-none-linux_{_ARCH}.whl").exists()
 
 def _trt_oss_installed():
     should = 'bbce424183ab082bf12ca06ba251c590'
