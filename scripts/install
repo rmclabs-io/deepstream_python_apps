@@ -129,12 +129,17 @@ def _whl_exist():
 
 def _trt_oss_installed():
     should = 'bbce424183ab082bf12ca06ba251c590'
+    if not LIBNVINFER_PLUGIN.exists():
+        return False
     got = md5(LIBNVINFER_PLUGIN.read_bytes()).hexdigest()
     return got == should
 
 def _peoplesegnet_installed():
     should = '72b7a71b33dad26e88a8cb5ce8e3ab47'
-    got = md5((DEEPSTREAM_MODELS/"peoplesegnet/model.step-600000_trt825_b2n10.etlt").read_bytes()).hexdigest()
+    peoplesegnet = DEEPSTREAM_MODELS/"peoplesegnet/model.step-600000_trt825_b2n10.etlt"
+    if not peoplesegnet.exists():
+        return False
+    got = md5(peoplesegnet.read_bytes()).hexdigest()
     return got == should
 
 
