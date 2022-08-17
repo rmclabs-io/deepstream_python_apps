@@ -53,6 +53,7 @@ INSTALL_GST_PYTHON = f"""\
 
 COMPILE_BINDINGS = f"""\
 cd {BINDINGS} \
+ && rm -rf build \
  && mkdir build \
  && cd build \
  && cmake \
