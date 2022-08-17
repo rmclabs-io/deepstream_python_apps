@@ -20,7 +20,7 @@ setuptools.setup(
     version="1.1.3",
     author="NVIDIA",
     description="Install precompiled DeepStream Python bindings extension",
-    url="nvidia.com",
+    url="https://developer.nvidia.com/deepstream-getting-started",
     packages=[''],
     package_data={'': ['pyds.so']},
     install_requires=["pgi", "PyGObject"]
