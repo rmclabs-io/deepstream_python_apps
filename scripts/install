@@ -87,10 +87,8 @@ cd {PROJECT_ROOT} \
   --content-disposition \
   https://api.ngc.nvidia.com/v2/models/nvidia/tao/peoplesegnet/versions/deployable_v2.0.2/zip \
   -O peoplesegnet_deployable_v2.0.2.zip \
-  && unzip peoplesegnet_deployable_v2.0.2.zip \
-  && mkdir -p models/peoplesegnet \
-  && mv model.step* models/peoplesegnet \
-  && rm -rf model.step* peoplesegnet_deployable_v2.0.2.zip \
+  && unzip peoplesegnet_deployable_v2.0.2.zip -d models/peoplesegnet \
+  && rm -rf peoplesegnet_deployable_v2.0.2.zip \
   && mv models/peoplesegnet {DEEPSTREAM_MODELS}/peoplesegnet
 """
 
