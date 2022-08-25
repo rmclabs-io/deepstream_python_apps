@@ -28,7 +28,7 @@ VALUES = {
     },
     "x86_64": {
         "LIBNVINFER_PLUGIN": Path("/usr/lib/x86_64-linux-gnu/libnvinfer.so.8.2.5"),
-        "TRT_OSS": "--no-check-certificate https://drive.google.com/file/d/1n5TO9OB9gWsfpg9qLiq4H5ID1lG9n2q5/view?usp=sharing -r -A 'uc*' -e robots=off -nd",
+        "TRT_OSS": "https://docs.google.com/uc?export=download&id=1n5TO9OB9gWsfpg9qLiq4H5ID1lG9n2q5",
     },
 }
 
