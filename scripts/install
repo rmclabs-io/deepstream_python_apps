@@ -28,7 +28,7 @@ VALUES = {
     },
     "x86_64": {
         "LIBNVINFER_PLUGIN": Path("/usr/lib/x86_64-linux-gnu/libnvinfer.so.8.2.5"),
-        "TRT_OSS": "https://nvidia.box.com/shared/static/mwtq4z847uz3v37ba8ntmk3ahfv5fnrm",
+        "TRT_OSS": "https://drive.google.com/file/d/1n5TO9OB9gWsfpg9qLiq4H5ID1lG9n2q5/view?usp=sharing",
     },
 }
 
