@@ -76,8 +76,8 @@ apt-get update \
 """
 
 INSTALL_PRECOMPILED_TRT_OSS = f"""\
-wget {TRT_OSS} \
-  -O {LIBNVINFER_PLUGIN} \
+wget '{TRT_OSS}' \
+  -O '{LIBNVINFER_PLUGIN}' \
 && ldconfig
 """
 
